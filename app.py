@@ -2,15 +2,9 @@ import os
 import ssl
 import httpx
 from anthropic import Anthropic
+from flask import Flask, request, jsonify, render_template_string
 
-# Create SSL context that doesn't verify certificates
-# Needed because company firewall intercepts SSL traffic
-ssl_context = ssl.create_default_context()
-ssl_context.check_hostname = False
-ssl_context.verify_mode = ssl.CERT_NONE
-
-# Create HTTP client with our custom SSL context
-http_client = httpx.Client(verify=ssl_context)
+app = Flask(__name__)
 
 client = Anthropic(
     api_key=os.getenv("ANTHROPIC_API_KEY"),
@@ -28,9 +22,89 @@ def ask_llm(prompt):
     return response.content[0].text
 
 
+# HTML page for the chatbot UI
+HTML_PAGE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LLM Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 { color: #333; text-align: center; }
+        form { display: flex; gap: 10px; margin: 20px 0; }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #45a049; }
+        .answer {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        .label { font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>LLM Chatbot</h1>
+    <form method="POST">
+        <input type="text" name="question" placeholder="Ask something..." required>
+        <button type="submit">Ask</button>
+    </form>
+    {% if answer %}
+    <div class="answer">
+        <span class="label">Answer:</span><br><br>
+        {{ answer }}
+    </div>
+    {% endif %}
+</body>
+</html>
+"""
+
+
+# Route for the home page - handles both showing the page and processing questions
+@app.route("/", methods=["GET", "POST"])
+def home():
+    answer = None
+    if request.method == "POST":
+        question = request.form["question"]
+        answer = ask_llm(question)
+    return render_template_string(HTML_PAGE, answer=answer)
+
+
+# API endpoint - for programmatic access (not browser)
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.json
+    question = data["question"]
+    answer = ask_llm(question)
+    return jsonify({"answer": answer})
+
+
+# Run the app
 if __name__ == "__main__":
-    user_input = input("Ask something: ")
-    print(ask_llm(user_input))
+    app.run(host="0.0.0.0", port=5000)
 
 #testing new commit for ci
 # re testing
