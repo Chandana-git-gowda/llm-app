@@ -1,13 +1,15 @@
 name: CI Pipeline
 
+#when to run and where 
 on:
   push:
     branches: [ "main" ]
-
+    
+#what to do; name, and runs on
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    #instal files
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
