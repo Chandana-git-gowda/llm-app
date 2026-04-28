@@ -31,3 +31,5 @@ def ask_llm(prompt):
 if __name__ == "__main__":
     user_input = input("Ask something: ")
     print(ask_llm(user_input))
+
+#testing new commit for ci
