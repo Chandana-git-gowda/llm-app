@@ -1,15 +1,13 @@
 import os
-import ssl
-import httpx
-from anthropic import Anthropic
 from flask import Flask, request, jsonify, render_template_string
+from anthropic import Anthropic
 
+# Create Flask web app
 app = Flask(__name__)
 
-client = Anthropic(
-    api_key=os.getenv("ANTHROPIC_API_KEY"),
-    http_client=http_client
-)
+# Create Anthropic client
+# No SSL bypass needed on Render - only needed on company network
+client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
 def ask_llm(prompt):
@@ -83,7 +81,7 @@ HTML_PAGE = """
 """
 
 
-# Route for the home page - handles both showing the page and processing questions
+# Route for the home page
 @app.route("/", methods=["GET", "POST"])
 def home():
     answer = None
@@ -93,7 +91,7 @@ def home():
     return render_template_string(HTML_PAGE, answer=answer)
 
 
-# API endpoint - for programmatic access (not browser)
+# API endpoint
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.json
@@ -105,6 +103,3 @@ def ask():
 # Run the app
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-
-#testing new commit for ci
-# re testing
